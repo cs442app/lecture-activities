@@ -1,0 +1,188 @@
+[
+  {
+    "userId": "user_123",
+    "eventType": "login",
+    "timestamp": "2024-01-15T08:30:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_456",
+    "eventType": "login",
+    "timestamp": "2024-01-15T09:15:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_789",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T09:20:00Z",
+    "metadata": {"platform": "iOS", "page": "home", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_123",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T08:35:00Z",
+    "metadata": {"platform": "iOS", "page": "products", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_456",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T09:45:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0", "product": "premium"},
+    "value": 29.99
+  },
+  {
+    "userId": "user_789",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T09:25:00Z",
+    "metadata": {"platform": "iOS", "page": "settings", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_234",
+    "eventType": "login",
+    "timestamp": "2024-01-15T10:00:00Z",
+    "metadata": {"platform": "Android", "version": "1.1.5"}
+  },
+  {
+    "userId": "user_567",
+    "eventType": "login",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_123",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T08:50:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0", "product": "basic"},
+    "value": 9.99
+  },
+  {
+    "userId": "user_234",
+    "eventType": "error",
+    "timestamp": "2024-01-15T10:05:00Z",
+    "metadata": {"platform": "Android", "version": "1.1.5", "errorCode": "NETWORK_ERROR"}
+  },
+  {
+    "userId": "user_456",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T09:50:00Z",
+    "metadata": {"platform": "Android", "page": "checkout", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_890",
+    "eventType": "login",
+    "timestamp": "2024-01-15T11:00:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_567",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T10:45:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0", "product": "premium"},
+    "value": 29.99
+  },
+  {
+    "userId": "user_789",
+    "eventType": "error",
+    "timestamp": "2024-01-15T09:30:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0", "errorCode": "TIMEOUT"}
+  },
+  {
+    "userId": "user_890",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T11:05:00Z",
+    "metadata": {"platform": "iOS", "page": "home", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_234",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T10:10:00Z",
+    "metadata": {"platform": "Android", "page": "products", "version": "1.1.5"}
+  },
+  {
+    "userId": "user_123",
+    "eventType": "logout",
+    "timestamp": "2024-01-15T09:00:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_345",
+    "eventType": "login",
+    "timestamp": "2024-01-15T11:30:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_456",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T10:00:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0", "product": "basic"},
+    "value": 9.99
+  },
+  {
+    "userId": "user_567",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T10:50:00Z",
+    "metadata": {"platform": "iOS", "page": "profile", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_345",
+    "eventType": "error",
+    "timestamp": "2024-01-15T11:35:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0", "errorCode": "PARSE_ERROR"}
+  },
+  {
+    "userId": "user_890",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T11:15:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0", "product": "premium"},
+    "value": 29.99
+  },
+  {
+    "userId": "user_789",
+    "eventType": "logout",
+    "timestamp": "2024-01-15T09:40:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_234",
+    "eventType": "purchase",
+    "timestamp": "2024-01-15T10:20:00Z",
+    "metadata": {"platform": "Android", "version": "1.1.5", "product": "basic"},
+    "value": 9.99
+  },
+  {
+    "userId": "user_456",
+    "eventType": "logout",
+    "timestamp": "2024-01-15T10:05:00Z",
+    "metadata": {"platform": "Android", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_678",
+    "eventType": "login",
+    "timestamp": "2024-01-15T12:00:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_345",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T11:40:00Z",
+    "metadata": {"platform": "Android", "page": "products", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_567",
+    "eventType": "error",
+    "timestamp": "2024-01-15T10:55:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0", "errorCode": "NETWORK_ERROR"}
+  },
+  {
+    "userId": "user_678",
+    "eventType": "page_view",
+    "timestamp": "2024-01-15T12:05:00Z",
+    "metadata": {"platform": "iOS", "page": "home", "version": "1.2.0"}
+  },
+  {
+    "userId": "user_123",
+    "eventType": "login",
+    "timestamp": "2024-01-15T13:00:00Z",
+    "metadata": {"platform": "iOS", "version": "1.2.0"}
+  }
+]

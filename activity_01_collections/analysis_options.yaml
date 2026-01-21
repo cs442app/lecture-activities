@@ -1,0 +1,39 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+
+linter:
+  rules:
+    # Style rules
+    - camel_case_types
+    - library_names
+    - file_names
+    - non_constant_identifier_names
+    - constant_identifier_names
+    
+    # Documentation
+    - package_api_docs
+    - public_member_api_docs
+    
+    # Usage
+    - avoid_print
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - unnecessary_this
+    - use_key_in_widget_constructors
+    
+    # Error prevention
+    - avoid_returning_null_for_void
+    - cancel_subscriptions
+    - close_sinks
+    - empty_catches
+    - empty_statements
