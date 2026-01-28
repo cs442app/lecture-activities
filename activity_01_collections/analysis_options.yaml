@@ -17,11 +17,7 @@ linter:
     - file_names
     - non_constant_identifier_names
     - constant_identifier_names
-    
-    # Documentation
-    - package_api_docs
-    - public_member_api_docs
-    
+
     # Usage
     - avoid_print
     - prefer_const_constructors
@@ -29,8 +25,7 @@ linter:
     - prefer_final_fields
     - prefer_final_locals
     - unnecessary_this
-    - use_key_in_widget_constructors
-    
+
     # Error prevention
     - avoid_returning_null_for_void
     - cancel_subscriptions
