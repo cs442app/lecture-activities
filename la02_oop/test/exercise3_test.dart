@@ -287,6 +287,7 @@ void main() {
           priority: Priority.high,
           status: Status.done,
           dueDate: DateTime.now().subtract(const Duration(days: 10)),
+          assignee: alice,
         ),
         makeTodo(
           id: 'T3',
