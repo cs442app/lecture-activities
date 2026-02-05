@@ -1,0 +1,33 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+
+linter:
+  rules:
+    # Style rules
+    - camel_case_types
+    - library_names
+    - file_names
+    - non_constant_identifier_names
+    - constant_identifier_names
+
+    # Usage
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - unnecessary_this
+
+    # Error prevention
+    - avoid_returning_null_for_void
+    - cancel_subscriptions
+    - close_sinks
+    - empty_catches
+    - empty_statements

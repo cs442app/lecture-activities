@@ -1,0 +1,432 @@
+[
+  {
+    "type": "todo",
+    "id": "TODO-001",
+    "title": "Set up CI/CD pipeline",
+    "description": "Configure GitHub Actions for automated testing and deployment",
+    "createdAt": "2024-01-15T09:00:00.000Z",
+    "dueDate": "2024-02-01T17:00:00.000Z",
+    "priority": "high",
+    "status": "inProgress",
+    "tags": ["devops", "infrastructure"],
+    "isCompleted": false,
+    "assignee": {
+      "id": "user-001",
+      "name": "Alice Chen",
+      "email": "alice@example.com"
+    }
+  },
+  {
+    "type": "todo",
+    "id": "TODO-002",
+    "title": "Write unit tests for auth module",
+    "description": "Add comprehensive unit tests for the authentication module",
+    "createdAt": "2024-01-16T10:30:00.000Z",
+    "dueDate": "2024-02-15T17:00:00.000Z",
+    "priority": "medium",
+    "status": "todo",
+    "tags": ["testing", "auth"],
+    "isCompleted": false
+  },
+  {
+    "type": "todo",
+    "id": "TODO-003",
+    "title": "Update project README",
+    "description": "Add setup instructions and API documentation",
+    "createdAt": "2024-01-17T08:00:00.000Z",
+    "priority": "low",
+    "status": "done",
+    "tags": ["docs"],
+    "isCompleted": true,
+    "assignee": {
+      "id": "user-003",
+      "name": "Carol Davis",
+      "email": "carol@example.com"
+    }
+  },
+  {
+    "type": "todo",
+    "id": "TODO-004",
+    "title": "Configure linting rules",
+    "description": "Set up analysis_options.yaml with team-agreed rules",
+    "createdAt": "2024-01-18T11:00:00.000Z",
+    "dueDate": "2024-01-25T17:00:00.000Z",
+    "priority": "low",
+    "status": "done",
+    "tags": ["tooling"],
+    "isCompleted": true,
+    "assignee": {
+      "id": "user-002",
+      "name": "Bob Smith",
+      "email": "bob@example.com"
+    }
+  },
+  {
+    "type": "todo",
+    "id": "TODO-005",
+    "title": "Set up database migrations",
+    "description": "Create initial schema and migration scripts",
+    "createdAt": "2024-01-20T09:00:00.000Z",
+    "dueDate": "2024-03-01T17:00:00.000Z",
+    "priority": "high",
+    "status": "todo",
+    "tags": ["database", "infrastructure"],
+    "isCompleted": false
+  },
+  {
+    "type": "todo",
+    "id": "TODO-006",
+    "title": "Review pull requests",
+    "description": "Review and merge pending PRs from last sprint",
+    "createdAt": "2024-02-01T08:00:00.000Z",
+    "priority": "medium",
+    "status": "inProgress",
+    "tags": [],
+    "isCompleted": false,
+    "assignee": {
+      "id": "user-004",
+      "name": "Dave Wilson",
+      "email": "dave@example.com"
+    }
+  },
+  {
+    "type": "bug",
+    "id": "BUG-001",
+    "title": "Login crash on iOS 17",
+    "description": "App crashes immediately when tapping the login button on iOS 17 devices",
+    "createdAt": "2024-01-20T10:00:00.000Z",
+    "dueDate": "2024-01-25T17:00:00.000Z",
+    "priority": "critical",
+    "status": "inProgress",
+    "tags": ["crash", "auth", "ios"],
+    "severity": 5,
+    "stepsToReproduce": [
+      "Open app on iOS 17 device",
+      "Tap login button",
+      "Enter any credentials",
+      "App crashes"
+    ],
+    "platform": "iOS",
+    "assignee": {
+      "id": "user-001",
+      "name": "Alice Chen",
+      "email": "alice@example.com"
+    },
+    "comments": [
+      {
+        "id": "comment-001",
+        "author": {
+          "id": "user-002",
+          "name": "Bob Smith",
+          "email": "bob@example.com"
+        },
+        "content": "Reproduced on iPhone 15 Pro. Looks like a null pointer in the auth callback.",
+        "createdAt": "2024-01-20T11:30:00.000Z"
+      },
+      {
+        "id": "comment-002",
+        "author": {
+          "id": "user-001",
+          "name": "Alice Chen",
+          "email": "alice@example.com"
+        },
+        "content": "Found the issue — the OAuth token response changed format in the latest SDK update.",
+        "createdAt": "2024-01-21T09:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "type": "bug",
+    "id": "BUG-002",
+    "title": "Profile image not loading",
+    "description": "User profile images show a broken image icon instead of the actual photo",
+    "createdAt": "2024-01-22T14:00:00.000Z",
+    "dueDate": "2024-02-05T17:00:00.000Z",
+    "priority": "medium",
+    "status": "todo",
+    "tags": ["ui", "profile"],
+    "severity": 3,
+    "stepsToReproduce": [
+      "Log in to the app",
+      "Navigate to profile page",
+      "Observe broken image icon"
+    ],
+    "platform": "Android",
+    "comments": []
+  },
+  {
+    "type": "bug",
+    "id": "BUG-003",
+    "title": "Notification sound plays twice",
+    "description": "Push notifications trigger the alert sound two times on Android devices",
+    "createdAt": "2024-01-25T09:30:00.000Z",
+    "priority": "low",
+    "status": "todo",
+    "tags": ["notifications", "android"],
+    "severity": 2,
+    "stepsToReproduce": [
+      "Enable notifications",
+      "Send a test push notification",
+      "Sound plays twice"
+    ],
+    "platform": "Android"
+  },
+  {
+    "type": "bug",
+    "id": "BUG-004",
+    "title": "Data sync fails on slow connections",
+    "description": "Background sync silently fails when network speed drops below 1 Mbps",
+    "createdAt": "2024-01-28T11:00:00.000Z",
+    "dueDate": "2024-02-10T17:00:00.000Z",
+    "priority": "high",
+    "status": "review",
+    "tags": ["sync", "network"],
+    "severity": 4,
+    "stepsToReproduce": [
+      "Throttle network to < 1 Mbps",
+      "Trigger background sync",
+      "Observe sync failure with no error message"
+    ],
+    "platform": "iOS",
+    "assignee": {
+      "id": "user-003",
+      "name": "Carol Davis",
+      "email": "carol@example.com"
+    },
+    "comments": [
+      {
+        "id": "comment-003",
+        "author": {
+          "id": "user-003",
+          "name": "Carol Davis",
+          "email": "carol@example.com"
+        },
+        "content": "Added retry logic with exponential backoff. Ready for review.",
+        "createdAt": "2024-02-05T16:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "type": "bug",
+    "id": "BUG-005",
+    "title": "Memory leak in image gallery",
+    "description": "Scrolling through the image gallery causes memory usage to grow unbounded",
+    "createdAt": "2024-02-01T10:00:00.000Z",
+    "dueDate": "2024-02-20T17:00:00.000Z",
+    "priority": "high",
+    "status": "inProgress",
+    "tags": ["performance", "memory"],
+    "severity": 4,
+    "stepsToReproduce": [
+      "Open image gallery with 100+ images",
+      "Scroll up and down repeatedly",
+      "Monitor memory usage — it grows continuously"
+    ],
+    "platform": "iOS",
+    "assignee": {
+      "id": "user-004",
+      "name": "Dave Wilson",
+      "email": "dave@example.com"
+    },
+    "comments": []
+  },
+  {
+    "type": "bug",
+    "id": "BUG-006",
+    "title": "Dark mode text contrast issue",
+    "description": "Some text is nearly invisible in dark mode due to low contrast",
+    "createdAt": "2024-02-03T08:00:00.000Z",
+    "priority": "low",
+    "status": "done",
+    "tags": ["ui", "accessibility", "dark-mode"],
+    "severity": 2,
+    "stepsToReproduce": [
+      "Enable dark mode in settings",
+      "Navigate to the help page",
+      "Notice gray text on dark background"
+    ],
+    "platform": "Web",
+    "assignee": {
+      "id": "user-002",
+      "name": "Bob Smith",
+      "email": "bob@example.com"
+    },
+    "comments": [
+      {
+        "id": "comment-004",
+        "author": {
+          "id": "user-001",
+          "name": "Alice Chen",
+          "email": "alice@example.com"
+        },
+        "content": "Good fix! WCAG AA contrast ratios look correct now.",
+        "createdAt": "2024-02-08T10:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-001",
+    "title": "Dark mode support",
+    "description": "Add a system-wide dark mode theme to the application",
+    "createdAt": "2024-02-01T09:00:00.000Z",
+    "dueDate": "2024-03-15T17:00:00.000Z",
+    "priority": "medium",
+    "status": "review",
+    "tags": ["ui", "theme"],
+    "userStory": "As a user, I want dark mode so that I can use the app comfortably at night",
+    "acceptanceCriteria": [
+      "Toggle switch in settings",
+      "Respects system theme preference",
+      "All screens render correctly in both modes",
+      "Theme preference persists across sessions"
+    ],
+    "effortEstimate": 8,
+    "assignee": {
+      "id": "user-002",
+      "name": "Bob Smith",
+      "email": "bob@example.com"
+    },
+    "comments": [
+      {
+        "id": "comment-005",
+        "author": {
+          "id": "user-004",
+          "name": "Dave Wilson",
+          "email": "dave@example.com"
+        },
+        "content": "Looking great! Just noticed the splash screen still uses the light theme.",
+        "createdAt": "2024-03-01T14:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-002",
+    "title": "Export tasks to CSV",
+    "description": "Allow users to export their task list as a CSV file",
+    "createdAt": "2024-02-05T11:00:00.000Z",
+    "dueDate": "2024-04-01T17:00:00.000Z",
+    "priority": "low",
+    "status": "todo",
+    "tags": ["export", "data"],
+    "userStory": "As a project manager, I want to export tasks to CSV so that I can share progress in spreadsheets",
+    "acceptanceCriteria": [
+      "Export button on task list view",
+      "CSV includes all task fields",
+      "File downloads on web, shares on mobile"
+    ],
+    "effortEstimate": 5,
+    "comments": []
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-003",
+    "title": "Real-time collaboration",
+    "description": "Enable multiple users to edit tasks simultaneously with live updates",
+    "createdAt": "2024-02-10T09:00:00.000Z",
+    "priority": "high",
+    "status": "todo",
+    "tags": ["collaboration", "websocket"],
+    "userStory": "As a team member, I want to see task updates in real time so that I always have current information",
+    "acceptanceCriteria": [
+      "Changes appear within 2 seconds for all connected users",
+      "Conflict resolution for simultaneous edits",
+      "Offline changes sync when reconnected"
+    ],
+    "effortEstimate": 13,
+    "assignee": {
+      "id": "user-001",
+      "name": "Alice Chen",
+      "email": "alice@example.com"
+    },
+    "comments": [
+      {
+        "id": "comment-006",
+        "author": {
+          "id": "user-003",
+          "name": "Carol Davis",
+          "email": "carol@example.com"
+        },
+        "content": "Should we use WebSockets or Server-Sent Events for this?",
+        "createdAt": "2024-02-12T10:00:00.000Z"
+      },
+      {
+        "id": "comment-007",
+        "author": {
+          "id": "user-001",
+          "name": "Alice Chen",
+          "email": "alice@example.com"
+        },
+        "content": "WebSockets make more sense since we need bidirectional communication.",
+        "createdAt": "2024-02-12T11:30:00.000Z"
+      }
+    ]
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-004",
+    "title": "Task templates",
+    "description": "Allow users to create and use templates for common task types",
+    "createdAt": "2024-02-15T10:00:00.000Z",
+    "dueDate": "2024-03-30T17:00:00.000Z",
+    "priority": "medium",
+    "status": "inProgress",
+    "tags": ["productivity", "templates"],
+    "userStory": "As a user, I want to create task templates so that I can quickly create recurring tasks",
+    "acceptanceCriteria": [
+      "Create template from existing task",
+      "Template library accessible from task creation",
+      "Templates support all task types"
+    ],
+    "effortEstimate": 5,
+    "assignee": {
+      "id": "user-003",
+      "name": "Carol Davis",
+      "email": "carol@example.com"
+    },
+    "comments": []
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-005",
+    "title": "Keyboard shortcuts",
+    "description": "Add keyboard shortcuts for common actions in the web version",
+    "createdAt": "2024-02-20T08:00:00.000Z",
+    "priority": "low",
+    "status": "done",
+    "tags": ["web", "ux"],
+    "userStory": "As a power user, I want keyboard shortcuts so that I can manage tasks more efficiently",
+    "acceptanceCriteria": [
+      "Shortcut for creating new task",
+      "Navigation between task lists",
+      "Help overlay showing all shortcuts"
+    ],
+    "effortEstimate": 3,
+    "assignee": {
+      "id": "user-004",
+      "name": "Dave Wilson",
+      "email": "dave@example.com"
+    },
+    "comments": []
+  },
+  {
+    "type": "feature",
+    "id": "FEAT-006",
+    "title": "Task dependencies",
+    "description": "Allow tasks to declare dependencies on other tasks",
+    "createdAt": "2024-02-25T09:00:00.000Z",
+    "dueDate": "2024-05-01T17:00:00.000Z",
+    "priority": "high",
+    "status": "todo",
+    "tags": ["core", "planning"],
+    "userStory": "As a project manager, I want to define task dependencies so that I can visualize the critical path",
+    "acceptanceCriteria": [
+      "Link tasks as blocked/blocking",
+      "Visual dependency graph",
+      "Prevent closing a task with open dependencies"
+    ],
+    "effortEstimate": 13,
+    "comments": []
+  }
+]
