@@ -48,13 +48,12 @@ Mark each item as complete by placing an 'x' in the brackets: [x]
    _Your answer:_
 
 2. Why do the `assign`/`unassign`/`addComment` methods return new instances
-   instead of modifying the existing object? How does this relate to Flutter
-   state management?
+   instead of modifying the existing object? How do you think this might fit into the reactive UI model implemented by Flutter?
 
    _Your answer:_
 
 3. When would you choose to use an extension vs. a mixin to add functionality
-   to an existing class? What are the trade-offs?
+   to a class?
 
    _Your answer:_
 
@@ -63,14 +62,17 @@ Mark each item as complete by placing an 'x' in the brackets: [x]
 For each exercise, indicate whether AI tools were used and describe how:
 
 **Exercise 1 (Class hierarchy and JSON):**
+
 - [ ] AI used
 - If yes, describe:
 
 **Exercise 2 (Interfaces and composition):**
+
 - [ ] AI used
 - If yes, describe:
 
 **Exercise 3 (Extensions and mixins):**
+
 - [ ] AI used
 - If yes, describe:
 
