@@ -25,31 +25,20 @@ different Flutter concept. Each exercise produces a standalone runnable app.
 
 ## Setup
 
-1. Open the `la03_flutter_basics` project in your IDE (VS Code or Android
-   Studio)
+1. Open the `la03_flutter_basics` project in VSCode
 
-2. Get dependencies:
+2. Get dependencies (VSCode should do this automatically):
 
    ```bash
    flutter pub get
    ```
 
-3. Run the app:
-
-   ```bash
-   flutter run
-   ```
+3. Run the app (click the Play button after opening `main.dart`)
 
    Choose a device/emulator when prompted. You should see the starter app with a
    `Placeholder` widget.
 
-4. **Flutter tooling to try as you work:**
-   - **Hot reload**: press `r` in the terminal (or save in your IDE) to see
-     changes instantly without losing app state
-   - **Hot restart**: press `R` to fully restart the app
-   - **Debug painting**: press `p` to toggle layout wireframes
-   - **Widget inspector**: press `i` to open the widget inspector (or use your
-     IDE's Flutter Inspector panel)
+4. From the toolbar, you can stop, restart, and open the DevTools inspector.
 
 ## Using `english_words`
 
@@ -122,7 +111,9 @@ should print messages to the debug console.
 
 ## Exercise 2: Custom StatelessWidget (`lib/playlist_app.dart`)
 
-**Goal:** Extract the Exercise 1 code into a reusable `StatelessWidget`.
+**Goal:** Extract the Exercise 1 code into a reusable `StatelessWidget`. You
+can do this using the refactoring tools built into VSCode that we'll go over
+during class.
 
 Open `lib/playlist_app.dart`. You'll find a `PlaylistApp` class skeleton with a
 `build` method that returns `Placeholder()`.
@@ -199,7 +190,7 @@ containing the following layout:
 ### Testing it
 
 Update `main.dart` to run `NowPlayingApp()` instead of `PlaylistApp()`. Try
-toggling debug painting (`p` in the terminal) to visualize how `Row` and
+toggling debug painting from the widget inspector to visualize how `Row` and
 `Column` divide the space.
 
 ---
@@ -262,10 +253,9 @@ home is a `Scaffold` with:
 
 ```dart
 itemBuilder: (context, index) {
-  final songTitle = WordPair.random().asPascalCase;
-  final artist = WordPair.random().asPascalCase;
-  // Generate a plausible duration, e.g.:
-  final duration = '${(index % 5) + 2}:${(index * 7 % 60).toString().padLeft(2, '0')}';
+  final songTitle = // randomly generate a title
+  final artist =    // randomly generate an artist
+  final duration =  // generate a plausible duration
 
   return ListTile(
     leading: CircleAvatar(child: Icon(Icons.music_note)),
