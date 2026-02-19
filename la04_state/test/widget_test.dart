@@ -7,3 +7,5 @@
 //   flutter test test/ex04_test.dart
 //
 //   flutter test   ← runs all of the above
+
+void main() {}
