@@ -16,6 +16,9 @@ void main() {
       await tester.pumpWidget(_wrap(LeaderboardScreen(quiz: _makeQuiz())));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Drain the pending timer so the test framework doesn't complain.
+      await tester.pumpAndSettle();
     });
 
     testWidgets('shows leaderboard entries after loading', (tester) async {

@@ -32,6 +32,9 @@ void main() {
           reason: 'Button should be disabled while submitting',
         );
       }
+
+      // Drain the pending timer so the test framework doesn't complain.
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a submitting indicator appears while the answer is checked',
@@ -45,6 +48,9 @@ void main() {
       await tester.pump(); // _isSubmitting = true rebuild
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Drain the pending timer so the test framework doesn't complain.
+      await tester.pumpAndSettle();
     });
 
     testWidgets('submitting indicator disappears after answer is processed',

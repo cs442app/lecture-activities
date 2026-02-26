@@ -18,6 +18,9 @@ void main() {
 
       // After the first pump the FutureBuilder is in the waiting state.
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Drain the pending timer so the test framework doesn't complain.
+      await tester.pumpAndSettle();
     });
 
     testWidgets('shows the question text once the future resolves',
