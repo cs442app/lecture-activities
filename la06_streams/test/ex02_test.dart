@@ -25,7 +25,7 @@ SensorReading _reading(double v, {DateTime? at}) => SensorReading(
 
 late StreamController<SensorReading> _ctrl;
 
-void _setUp() => _ctrl = StreamController<SensorReading>.broadcast();
+void _setUp() => _ctrl = StreamController<SensorReading>.broadcast(sync: true);
 Future<void> _tearDown() async => _ctrl.close();
 
 Widget _buildApp() =>

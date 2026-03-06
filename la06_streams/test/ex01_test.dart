@@ -23,9 +23,9 @@ late StreamController<SensorReading> _presCtrl;
 late SensorService _service;
 
 void _setUp() {
-  _tempCtrl = StreamController<SensorReading>.broadcast();
-  _humCtrl = StreamController<SensorReading>.broadcast();
-  _presCtrl = StreamController<SensorReading>.broadcast();
+  _tempCtrl = StreamController<SensorReading>.broadcast(sync: true);
+  _humCtrl = StreamController<SensorReading>.broadcast(sync: true);
+  _presCtrl = StreamController<SensorReading>.broadcast(sync: true);
   _service = SensorService.fromStreams(
     temperatureStream: _tempCtrl.stream,
     humidityStream: _humCtrl.stream,
