@@ -1,0 +1,66 @@
+# Default starter decks bundled with Cardify.
+#
+# This file is read-only at runtime. When the user customises the library
+# (adds or removes a deck template), the app saves the result to
+# documents/decks.json and reads from there on subsequent launches.
+#
+# Each entry has:
+#   title    – display name shown in the template browser
+#   category – broad subject tag
+#   cards    – list of front/back pairs
+
+- title: Dart Basics
+  category: Programming
+  cards:
+    - front: What keyword declares a variable whose value can never change?
+      back: "final (runtime constant) or const (compile-time constant)"
+    - front: What is the difference between `var` and `dynamic`?
+      back: "`var` infers a static type at compile time; `dynamic` disables type checking entirely"
+    - front: What does the `?.` operator do?
+      back: "Null-safe member access: evaluates to null instead of throwing if the receiver is null"
+    - front: What does `??` do?
+      back: "Returns the left-hand value if it is non-null, otherwise returns the right-hand value"
+    - front: How do you declare a named constructor in Dart?
+      back: "ClassName.constructorName(...) { ... } — e.g. DateTime.now()"
+    - front: What is a `Future<T>`?
+      back: A value that will be available at some point in the future; the Dart equivalent of a Promise
+    - front: What does `async*` / `yield` produce?
+      back: A Stream — an async* function emits multiple values over time instead of a single return value
+
+- title: Flutter Widgets
+  category: Programming
+  cards:
+    - front: What is the difference between StatelessWidget and StatefulWidget?
+      back: StatelessWidget has no mutable state; StatefulWidget pairs with a State object whose fields can change and trigger rebuilds via setState
+    - front: Which widget do you use to lay out children in a horizontal line?
+      back: Row
+    - front: Which widget do you use to lay out children in a vertical line?
+      back: Column
+    - front: What does `Expanded` do inside a Row or Column?
+      back: It fills the remaining main-axis space, dividing it proportionally among all Expanded children by flex factor
+    - front: What is the purpose of a `Key`?
+      back: Keys let Flutter match widget instances across rebuilds, preserving State when the widget's position in the tree changes
+    - front: What does `BuildContext` represent?
+      back: The location of a widget in the widget tree; used to look up inherited widgets and navigate
+    - front: What widget renders Material Design elevation and rounded corners?
+      back: Card
+    - front: How do you show a full-screen route?
+      back: "Navigator.push(context, MaterialPageRoute(builder: (_) => MyScreen()))"
+
+- title: Data Structures
+  category: Computer Science
+  cards:
+    - front: What is the time complexity of lookup in a hash map?
+      back: O(1) average case; O(n) worst case due to hash collisions
+    - front: What is a stack?
+      back: A LIFO (Last In, First Out) data structure supporting push and pop in O(1)
+    - front: What is a queue?
+      back: A FIFO (First In, First Out) data structure supporting enqueue and dequeue in O(1)
+    - front: What is the difference between a tree and a graph?
+      back: A tree is a connected acyclic graph with a designated root; a graph may have cycles and multiple connected components
+    - front: What does Big-O notation describe?
+      back: An upper bound on the growth rate of an algorithm's resource usage (time or space) as input size grows
+    - front: What is a binary search tree?
+      back: A tree where every node's left subtree contains only smaller values and the right subtree contains only larger values
+    - front: What is the worst-case time complexity of quicksort?
+      back: O(n²) — occurs when the pivot is always the smallest or largest element; average case is O(n log n)
