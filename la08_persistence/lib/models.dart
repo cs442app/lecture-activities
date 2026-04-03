@@ -124,7 +124,7 @@ class DeckTemplate {
         title: m['title'] as String,
         category: m['category'] as String,
         cards: (m['cards'] as List)
-            .map((c) => CardTemplate.fromMap(c as Map<String, dynamic>))
+            .map((c) => CardTemplate.fromMap(Map<String, dynamic>.from(c as Map)))
             .toList(),
       );
 

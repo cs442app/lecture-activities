@@ -296,13 +296,19 @@ Future<List<DeckTemplate>> loadTemplates() async {
   final raw  = await loadYamlAsset();
   final yaml = loadYaml(raw) as YamlList;
   return yaml
-      .map((e) => DeckTemplate.fromMap(Map<String, dynamic>.from(e as YamlMap)))
+      .map((e) => DeckTemplate.fromMap(
+            Map<String, dynamic>.from(e as YamlMap)))
       .toList();
 }
 ```
 
 Use `getDocsDirectory()` and `loadYamlAsset()` (not the underlying APIs
 directly) so the test subclass can inject test doubles.
+
+`Map<String, dynamic>.from(e as YamlMap)` is required because `YamlMap` is an
+immutable read-only type — it cannot be directly cast to `Map<String, dynamic>`
+even though it implements `Map`.  `Map.from` creates a plain mutable copy.
+`DeckTemplate.fromMap` handles the same conversion for the nested card entries.
 
 #### Run and verify
 
