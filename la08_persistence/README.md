@@ -129,6 +129,19 @@ on earlier ones:
 
 ---
 
+## Supported Platforms
+
+**Do not run this app on Chrome (web).** `sqflite` has no web backend and the
+app will throw at startup on that target. Use one of:
+
+- iOS simulator or device
+- Android emulator or device
+- macOS (native, not web)
+
+All three persistence mechanisms work on all three of those targets.
+
+---
+
 ## File Structure
 
 ```
