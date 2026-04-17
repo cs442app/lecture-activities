@@ -6,7 +6,7 @@ import 'models.dart';
 
 /// Thrown when the server responds with a non-2xx status code.
 ///
-/// [statusCode] is the HTTP status (e.g. 401, 409, 422).
+/// [statusCode] is the HTTP status (e.g. 401, 410, 422).
 /// [message]    is the human-readable error string from the response body.
 class ApiException implements Exception {
   final int statusCode;
@@ -164,7 +164,6 @@ class ApiService {
   ///
   /// Throws [ApiException] — notably:
   ///   403  you are the puzzle creator
-  ///   409  you submitted the last guess (consecutive-guess rule)
   ///   410  puzzle is already solved
   ///   422  not a valid English word
   ///

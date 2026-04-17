@@ -386,15 +386,6 @@ def submit_guess(puzzle_id):
     if word not in VALID_WORDS:
         return jsonify({'error': 'Not a valid English word'}), 422
 
-    # Enforce the no-consecutive-guesses rule
-    cur.execute(
-        'SELECT user_id FROM crowdle_guesses WHERE puzzle_id = %s ORDER BY id DESC LIMIT 1',
-        (puzzle_id,),
-    )
-    last_guess = cur.fetchone()
-    if last_guess and last_guess['user_id'] == user_id:
-        return jsonify({'error': 'Wait for another player to guess before guessing again'}), 409
-
     # Compute clue and save guess
     clue = compute_clue(puzzle['word'], word)
     cur.execute(

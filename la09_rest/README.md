@@ -10,7 +10,7 @@ By the end of this activity you will be able to:
   navigation at startup.
 - Decode JSON responses into typed Dart model objects and propagate server-side
   error messages to the UI.
-- Handle specific HTTP status codes (401, 403, 409, 410, 422) in `catch` blocks
+- Handle specific HTTP status codes (401, 403, 410, 422) in `catch` blocks
   to display contextual error messages rather than generic failures.
 - Use `FutureBuilder` to load and display data from a REST API.
 - Combine multiple concurrent futures with `Future.wait`.
@@ -42,7 +42,6 @@ valid data.
 401 Unauthorized — missing or invalid JWT
 403 Forbidden    — authenticated but not allowed (guessing your own puzzle)
 404 Not Found    — resource doesn't exist
-409 Conflict     — rule violation (consecutive-guess rule)
 410 Gone         — resource exists but is no longer actionable (solved puzzle)
 422 Unprocessable — request is well-formed but semantically invalid (not a real word)
 ```
@@ -113,8 +112,6 @@ await prefs.remove('jwt_token');
 - Anyone can **view all puzzles** and their public guess histories.
 - Guesses are **Wordle-style**: each tile turns green (right position), yellow
   (right letter, wrong position), or grey (not in the word).
-- **Consecutive-guess rule**: you must wait for at least one other player to
-  guess before you can guess again on the same puzzle.
 - **Scoring**:
   - The player who guesses correctly earns `max(1, 11 − total_guesses)` points.
   - The puzzle creator earns `floor(total_guesses / 2)` points — harder puzzles
@@ -223,7 +220,6 @@ All errors return `{"error": "<message>"}` with the appropriate status code:
 | 401  | Missing or invalid JWT                   |
 | 403  | You cannot guess your own puzzle         |
 | 404  | Puzzle not found                         |
-| 409  | Consecutive-guess rule violated          |
 | 410  | Puzzle is already solved                 |
 | 422  | Validation failed (bad word, bad length) |
 
@@ -399,7 +395,6 @@ Tap a puzzle from the list. The full clue history should appear as coloured
 immediately after a successful guess. Verify each error case:
 
 - Try guessing a non-word (e.g. "zzzzz") → "Not a valid English word"
-- Guess twice in a row before anyone else guesses → "Wait for another player..."
 - Try to guess on a puzzle you created → the input is disabled
 
 ---

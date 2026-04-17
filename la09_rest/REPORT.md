@@ -28,10 +28,11 @@ Mark each item complete by placing an 'x' in the brackets: [x]
    activity where the status code tells you something the message alone might
    not.
 
-2. **Exercise 3 — Consecutive-guess rule**: The server enforces this rule, not
-   the client. You could also disable the Guess button client-side if the user's
-   last guess is the most recent one. What is the advantage of enforcing it on
-   the server? What is the advantage of also enforcing it on the client?
+2. **Exercise 3 — Server-side validation**: The server rejects guesses on solved
+   puzzles (410) and guesses by the puzzle creator (403), and the client reflects
+   these errors in the UI. Why is it important that these rules are enforced on
+   the server even when the client also enforces them? Give a concrete example of
+   what could go wrong if only the client enforced them.
 
 3. **REST vs local persistence**: In la08 you stored data locally with SQLite
    and SharedPreferences. In this activity all data lives on the server and is
