@@ -14,7 +14,7 @@ import urllib.request
 from datetime import timedelta
 
 import sqlite3
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, get_jwt_identity,
 )
@@ -386,6 +386,175 @@ def leaderboard():
         {'rank': i + 1, 'username': row['username'], 'score': row['score']}
         for i, row in enumerate(cur.fetchall())
     ])
+
+
+# ── Browser views ─────────────────────────────────────────────────────────────
+
+_BASE_CSS = '''
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; background: #121213; color: #e0e0e0; padding: 24px; }
+  h1   { font-size: 2rem; letter-spacing: .1em; margin-bottom: 4px; }
+  .sub { color: #888; font-size: .9rem; margin-bottom: 24px; }
+  a    { color: #538d4e; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .tile {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 4px; margin: 2px;
+    font-weight: 700; font-size: 1.1rem; color: #fff;
+  }
+  .correct { background: #538d4e; }
+  .present { background: #b59f3b; }
+  .absent  { background: #3a3a3c; }
+'''
+
+_LEADERBOARD_HTML = '''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="15">
+  <title>Crowdle — Leaderboard</title>
+  <style>
+    ''' + _BASE_CSS + '''
+    table { border-collapse: collapse; width: 100%; max-width: 480px; }
+    th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid #333; }
+    th { color: #888; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+    tr.me td { background: #1a2e1a; }
+    .rank { font-weight: 700; font-size: 1.1rem; width: 48px; }
+    .gold   { color: #ffd700; }
+    .silver { color: #c0c0c0; }
+    .bronze { color: #cd7f32; }
+    .score  { font-weight: 700; color: #538d4e; }
+  </style>
+</head>
+<body>
+  <h1>🟩 Crowdle</h1>
+  <p class="sub">Leaderboard &mdash; refreshes every 15 s &nbsp;|&nbsp; <a href="/view/puzzles">Puzzles &rarr;</a></p>
+  <table>
+    <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
+    <tbody>
+    {% for e in entries %}
+      <tr>
+        <td class="rank {% if e.rank == 1 %}gold{% elif e.rank == 2 %}silver{% elif e.rank == 3 %}bronze{% endif %}">
+          {{ e.rank }}
+        </td>
+        <td>{{ e.username }}</td>
+        <td class="score">{{ e.score }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" style="color:#555;padding:24px">No players yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>'''
+
+_PUZZLES_HTML = '''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="10">
+  <title>Crowdle — Puzzles</title>
+  <style>
+    ''' + _BASE_CSS + '''
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .card {
+      background: #1e1e1f; border: 1px solid #333; border-radius: 8px; padding: 16px;
+    }
+    .card.solved { border-color: #538d4e; }
+    .card-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+    .creator { font-weight: 700; font-size: 1rem; }
+    .badge {
+      font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 3px;
+    }
+    .badge.active  { background: #333; color: #aaa; }
+    .badge.solved  { background: #538d4e; color: #fff; }
+    .answer { font-size: 1.4rem; font-weight: 700; letter-spacing: .15em; color: #538d4e; margin-bottom: 8px; }
+    .guess-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .guesser   { font-size: .8rem; color: #888; min-width: 80px; }
+    .no-guesses { color: #555; font-size: .85rem; }
+    .guess-count { font-size: .8rem; color: #666; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🟩 Crowdle</h1>
+  <p class="sub">Puzzles &mdash; refreshes every 10 s &nbsp;|&nbsp; <a href="/view/leaderboard">Leaderboard &rarr;</a></p>
+  <div class="grid">
+  {% for p in puzzles %}
+    <div class="card {{ p.status }}">
+      <div class="card-header">
+        <span class="creator">{{ p.creator }}</span>
+        <span class="badge {{ p.status }}">{{ p.status }}</span>
+      </div>
+      {% if p.status == "solved" %}
+        <div class="answer">{{ p.word.upper() }}</div>
+      {% endif %}
+      <div class="guess-count">{{ p.guesses | length }} guess{{ "es" if p.guesses | length != 1 else "" }}</div>
+      {% if p.guesses %}
+        {% for g in p.guesses %}
+          <div class="guess-row">
+            <span class="guesser">{{ g.username }}</span>
+            <span>
+              {% for i in range(5) %}
+                <span class="tile {{ g.clue[i] }}">{{ g.word[i].upper() }}</span>
+              {% endfor %}
+            </span>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-guesses">No guesses yet.</p>
+      {% endif %}
+    </div>
+  {% else %}
+    <p style="color:#555">No puzzles yet.</p>
+  {% endfor %}
+  </div>
+</body>
+</html>'''
+
+
+@app.route('/view/leaderboard')
+def view_leaderboard():
+    cur.execute('SELECT username, score FROM users ORDER BY score DESC, username ASC')
+    entries = [
+        {'rank': i + 1, 'username': r['username'], 'score': r['score']}
+        for i, r in enumerate(cur.fetchall())
+    ]
+    return render_template_string(_LEADERBOARD_HTML, entries=entries)
+
+
+@app.route('/view/puzzles')
+def view_puzzles():
+    import json
+    cur.execute('''
+        SELECT puzzles.id, users.username AS creator, puzzles.status, puzzles.word
+        FROM puzzles
+        JOIN users ON puzzles.creator_id = users.id
+        ORDER BY puzzles.id DESC
+    ''')
+    puzzle_rows = cur.fetchall()
+
+    puzzles = []
+    for row in puzzle_rows:
+        cur.execute('''
+            SELECT users.username, guesses.word, guesses.clue
+            FROM guesses
+            JOIN users ON guesses.user_id = users.id
+            WHERE guesses.puzzle_id = ?
+            ORDER BY guesses.id ASC
+        ''', (row['id'],))
+        guesses = [
+            {'username': g['username'], 'word': g['word'], 'clue': json.loads(g['clue'])}
+            for g in cur.fetchall()
+        ]
+        puzzles.append({
+            'creator': row['creator'],
+            'status':  row['status'],
+            'word':    row['word'],
+            'guesses': guesses,
+        })
+
+    return render_template_string(_PUZZLES_HTML, puzzles=puzzles)
 
 
 # ── Error handlers ─────────────────────────────────────────────────────────────
