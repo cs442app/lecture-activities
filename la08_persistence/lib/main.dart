@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'app_settings.dart';
 import 'database.dart';
@@ -9,6 +12,9 @@ void main() async {
   // Required before any async work in main().
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+  }
   // Open the SQLite database. If the schema has not been created yet,
   // openAppDatabase() will run the onCreate callback automatically.
   final db = await openAppDatabase();
