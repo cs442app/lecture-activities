@@ -3,3 +3,4 @@ flask-jwt-extended
 flask-bcrypt
 better-profanity
 gunicorn
+psycopg2-binary

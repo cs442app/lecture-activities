@@ -9,12 +9,16 @@
 #   solver  points = max(1, 11 - total_guesses)
 #   creator points = total_guesses // 2
 
+import json
 import os
 import urllib.request
 from datetime import timedelta
 
-import sqlite3
-from flask import Flask, request, jsonify, render_template_string
+import psycopg2
+import psycopg2.pool
+import psycopg2.errors
+from psycopg2.extras import RealDictCursor
+from flask import Flask, g, request, jsonify, render_template_string
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, get_jwt_identity,
 )
@@ -61,44 +65,80 @@ print(f'Loaded {len(VALID_WORDS)} valid 5-letter words.')
 
 # ── Database ───────────────────────────────────────────────────────────────────
 
-db = sqlite3.connect('crowdle.db', check_same_thread=False)
-db.row_factory = sqlite3.Row
-db.executescript('''
-    PRAGMA foreign_keys = ON;
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost/crowdle')
 
-    CREATE TABLE IF NOT EXISTS users (
-        id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        username      TEXT    NOT NULL UNIQUE,
-        password_hash TEXT    NOT NULL,
-        score         INTEGER NOT NULL DEFAULT 0
-    );
+# Render's DATABASE_URL uses postgres:// scheme; psycopg2 requires postgresql://
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
-    CREATE TABLE IF NOT EXISTS puzzles (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        word       TEXT    NOT NULL,
-        creator_id INTEGER NOT NULL REFERENCES users(id),
-        status     TEXT    NOT NULL DEFAULT 'active',
-        created_at TEXT    NOT NULL DEFAULT (datetime('now')),
-        solved_at  TEXT,
-        solver_id  INTEGER REFERENCES users(id)
-    );
+_pool = psycopg2.pool.ThreadedConnectionPool(
+    minconn=1,
+    maxconn=10,
+    dsn=DATABASE_URL,
+)
 
-    CREATE TABLE IF NOT EXISTS guesses (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        puzzle_id  INTEGER NOT NULL REFERENCES puzzles(id),
-        user_id    INTEGER NOT NULL REFERENCES users(id),
-        word       TEXT    NOT NULL,
-        clue       TEXT    NOT NULL,
-        created_at TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-''')
+
+def get_db():
+    """Return the per-request database connection (checked out from pool)."""
+    if 'db' not in g:
+        g.db = _pool.getconn()
+        g.db.autocommit = False
+    return g.db
+
+
+@app.teardown_appcontext
+def return_db(exc):
+    db = g.pop('db', None)
+    if db is not None:
+        if exc is None:
+            db.commit()
+        else:
+            db.rollback()
+        _pool.putconn(db)
 
 
 def _cursor():
-    """Return a fresh cursor with foreign-key enforcement on."""
-    cur = db.cursor()
-    cur.execute('PRAGMA foreign_keys = ON')
-    return cur
+    """Return a RealDictCursor for the current request's connection."""
+    return get_db().cursor(cursor_factory=RealDictCursor)
+
+
+def _init_db():
+    """Create tables if they don't exist."""
+    with app.app_context():
+        cur = _cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id            SERIAL PRIMARY KEY,
+                username      TEXT   NOT NULL UNIQUE,
+                password_hash TEXT   NOT NULL,
+                score         INTEGER NOT NULL DEFAULT 0
+            )
+        ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS puzzles (
+                id         SERIAL PRIMARY KEY,
+                word       TEXT    NOT NULL,
+                creator_id INTEGER NOT NULL REFERENCES users(id),
+                status     TEXT    NOT NULL DEFAULT 'active',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                solved_at  TIMESTAMPTZ,
+                solver_id  INTEGER REFERENCES users(id)
+            )
+        ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS guesses (
+                id         SERIAL PRIMARY KEY,
+                puzzle_id  INTEGER NOT NULL REFERENCES puzzles(id),
+                user_id    INTEGER NOT NULL REFERENCES users(id),
+                word       TEXT    NOT NULL,
+                clue       TEXT    NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        ''')
+        get_db().commit()
+
+
+_init_db()
 
 
 # ── Clue logic ─────────────────────────────────────────────────────────────────
@@ -146,12 +186,13 @@ def register():
     password_hash = bcrypt.generate_password_hash(password).decode()
     try:
         cur.execute(
-            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+            'INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id',
             (username, password_hash),
         )
-        db.commit()
-        user_id = cur.lastrowid
-    except sqlite3.IntegrityError:
+        user_id = cur.fetchone()['id']
+        get_db().commit()
+    except psycopg2.errors.UniqueViolation:
+        get_db().rollback()
         return jsonify({'error': 'Username already taken'}), 409
 
     return jsonify({
@@ -168,7 +209,7 @@ def login():
     username = (data.get('username') or '').strip()
     password = data.get('password') or ''
 
-    cur.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+    cur.execute('SELECT id, password_hash FROM users WHERE username = %s', (username,))
     row = cur.fetchone()
     if not row or not bcrypt.check_password_hash(row['password_hash'], password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -185,7 +226,7 @@ def login():
 def me():
     cur = _cursor()
     user_id = int(get_jwt_identity())
-    cur.execute('SELECT id, username, score FROM users WHERE id = ?', (user_id,))
+    cur.execute('SELECT id, username, score FROM users WHERE id = %s', (user_id,))
     row = cur.fetchone()
     if not row:
         return jsonify({'error': 'User not found'}), 404
@@ -196,11 +237,10 @@ def me():
 
 def _puzzle_summary(cur, row) -> dict:
     """Build the list-view representation of a puzzle row."""
-    import json
     cur.execute(
         'SELECT guesses.word, guesses.clue, users.username '
         'FROM guesses JOIN users ON guesses.user_id = users.id '
-        'WHERE guesses.puzzle_id = ? ORDER BY guesses.id DESC LIMIT 1',
+        'WHERE guesses.puzzle_id = %s ORDER BY guesses.id DESC LIMIT 1',
         (row['id'],),
     )
     last = cur.fetchone()
@@ -226,7 +266,7 @@ def list_puzzles():
         FROM puzzles
         JOIN users ON puzzles.creator_id = users.id
         LEFT JOIN guesses ON guesses.puzzle_id = puzzles.id
-        GROUP BY puzzles.id
+        GROUP BY puzzles.id, users.username, puzzles.creator_id, puzzles.status, puzzles.word
         ORDER BY puzzles.id DESC
     ''')
     rows = cur.fetchall()
@@ -235,7 +275,6 @@ def list_puzzles():
 
 @app.route('/puzzles/<int:puzzle_id>')
 def get_puzzle(puzzle_id):
-    import json
     cur = _cursor()
     cur.execute('''
         SELECT puzzles.id, users.username AS creator, puzzles.creator_id,
@@ -244,8 +283,8 @@ def get_puzzle(puzzle_id):
         FROM puzzles
         JOIN users ON puzzles.creator_id = users.id
         LEFT JOIN guesses ON guesses.puzzle_id = puzzles.id
-        WHERE puzzles.id = ?
-        GROUP BY puzzles.id
+        WHERE puzzles.id = %s
+        GROUP BY puzzles.id, users.username, puzzles.creator_id, puzzles.status, puzzles.word
     ''', (puzzle_id,))
     puzzle = cur.fetchone()
     if not puzzle:
@@ -255,7 +294,7 @@ def get_puzzle(puzzle_id):
         SELECT guesses.id, users.username, guesses.word, guesses.clue, guesses.created_at
         FROM guesses
         JOIN users ON guesses.user_id = users.id
-        WHERE guesses.puzzle_id = ?
+        WHERE guesses.puzzle_id = %s
         ORDER BY guesses.id ASC
     ''', (puzzle_id,))
     guesses = [
@@ -264,7 +303,7 @@ def get_puzzle(puzzle_id):
             'username':   g['username'],
             'word':       g['word'],
             'clue':       json.loads(g['clue']),
-            'created_at': g['created_at'],
+            'created_at': g['created_at'].isoformat(),
         }
         for g in cur.fetchall()
     ]
@@ -298,13 +337,13 @@ def create_puzzle():
         return jsonify({'error': 'Word contains inappropriate content'}), 422
 
     cur.execute(
-        'INSERT INTO puzzles (word, creator_id) VALUES (?, ?)',
+        'INSERT INTO puzzles (word, creator_id) VALUES (%s, %s) RETURNING id',
         (word, user_id),
     )
-    db.commit()
-    puzzle_id = cur.lastrowid
+    puzzle_id = cur.fetchone()['id']
+    get_db().commit()
 
-    cur.execute('SELECT username FROM users WHERE id = ?', (user_id,))
+    cur.execute('SELECT username FROM users WHERE id = %s', (user_id,))
     creator = cur.fetchone()['username']
 
     return jsonify({
@@ -321,14 +360,13 @@ def create_puzzle():
 @app.route('/puzzles/<int:puzzle_id>/guesses', methods=['POST'])
 @jwt_required()
 def submit_guess(puzzle_id):
-    import json
     cur = _cursor()
     user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
     word = (data.get('word') or '').strip().lower()
 
     # Validate the puzzle
-    cur.execute('SELECT * FROM puzzles WHERE id = ?', (puzzle_id,))
+    cur.execute('SELECT * FROM puzzles WHERE id = %s', (puzzle_id,))
     puzzle = cur.fetchone()
     if not puzzle:
         return jsonify({'error': 'Puzzle not found'}), 404
@@ -345,7 +383,7 @@ def submit_guess(puzzle_id):
 
     # Enforce the no-consecutive-guesses rule
     cur.execute(
-        'SELECT user_id FROM guesses WHERE puzzle_id = ? ORDER BY id DESC LIMIT 1',
+        'SELECT user_id FROM guesses WHERE puzzle_id = %s ORDER BY id DESC LIMIT 1',
         (puzzle_id,),
     )
     last_guess = cur.fetchone()
@@ -355,14 +393,15 @@ def submit_guess(puzzle_id):
     # Compute clue and save guess
     clue = compute_clue(puzzle['word'], word)
     cur.execute(
-        'INSERT INTO guesses (puzzle_id, user_id, word, clue) VALUES (?, ?, ?, ?)',
+        'INSERT INTO guesses (puzzle_id, user_id, word, clue) VALUES (%s, %s, %s, %s) RETURNING id',
         (puzzle_id, user_id, word, json.dumps(clue)),
     )
-    db.commit()
+    guess_id = cur.fetchone()['id']
+    get_db().commit()
 
     solved = (word == puzzle['word'])
     response: dict = {
-        'id':     cur.lastrowid,
+        'id':     guess_id,
         'word':   word,
         'clue':   clue,
         'solved': solved,
@@ -370,19 +409,19 @@ def submit_guess(puzzle_id):
 
     if solved:
         # Count total guesses (including the winning one)
-        cur.execute('SELECT COUNT(*) AS n FROM guesses WHERE puzzle_id = ?', (puzzle_id,))
+        cur.execute('SELECT COUNT(*) AS n FROM guesses WHERE puzzle_id = %s', (puzzle_id,))
         total = cur.fetchone()['n']
 
         solver_points = max(1, 11 - total)
         creator_points = total // 2
 
         cur.execute(
-            'UPDATE puzzles SET status = ?, solved_at = datetime(\'now\'), solver_id = ? WHERE id = ?',
+            'UPDATE puzzles SET status = %s, solved_at = NOW(), solver_id = %s WHERE id = %s',
             ('solved', user_id, puzzle_id),
         )
-        cur.execute('UPDATE users SET score = score + ? WHERE id = ?', (solver_points, user_id))
-        cur.execute('UPDATE users SET score = score + ? WHERE id = ?', (creator_points, puzzle['creator_id']))
-        db.commit()
+        cur.execute('UPDATE users SET score = score + %s WHERE id = %s', (solver_points, user_id))
+        cur.execute('UPDATE users SET score = score + %s WHERE id = %s', (creator_points, puzzle['creator_id']))
+        get_db().commit()
 
         response['points_earned'] = solver_points
 
@@ -541,7 +580,6 @@ def view_leaderboard():
 
 @app.route('/view/puzzles')
 def view_puzzles():
-    import json
     cur = _cursor()
     cur.execute('''
         SELECT puzzles.id, users.username AS creator, puzzles.status, puzzles.word
@@ -557,7 +595,7 @@ def view_puzzles():
             SELECT users.username, guesses.word, guesses.clue
             FROM guesses
             JOIN users ON guesses.user_id = users.id
-            WHERE guesses.puzzle_id = ?
+            WHERE guesses.puzzle_id = %s
             ORDER BY guesses.id ASC
         ''', (row['id'],))
         guesses = [
