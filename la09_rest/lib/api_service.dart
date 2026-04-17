@@ -24,7 +24,6 @@ class ApiException implements Exception {
 /// screen as a constructor argument.  All JWT management is handled here —
 /// screens never touch SharedPreferences directly.
 class ApiService {
-  // TODO 0: Replace with the Render URL you deploy the server to before class.
   static const String _baseUrl = 'https://crowdle.onrender.com';
 
   static const String _tokenKey    = 'jwt_token';
