@@ -25,7 +25,7 @@ class ApiException implements Exception {
 /// screens never touch SharedPreferences directly.
 class ApiService {
   // TODO 0: Replace with the Render URL you deploy the server to before class.
-  static const String _baseUrl = 'http://localhost:5001';
+  static const String _baseUrl = 'https://crowdle.onrender.com';
 
   static const String _tokenKey    = 'jwt_token';
   static const String _usernameKey = 'username';
