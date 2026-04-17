@@ -19,6 +19,7 @@ import psycopg2.pool
 import psycopg2.errors
 from psycopg2.extras import RealDictCursor
 from flask import Flask, g, request, jsonify, render_template_string
+from flask_cors import CORS
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, get_jwt_identity,
 )
@@ -27,6 +28,7 @@ from better_profanity import profanity
 
 
 app = Flask(__name__)
+CORS(app)
 bcrypt = Bcrypt(app)
 
 app.config['JWT_SECRET_KEY'] = os.environ.get(
@@ -103,11 +105,12 @@ def _cursor():
 
 
 def _init_db():
-    """Create tables if they don't exist."""
-    with app.app_context():
-        cur = _cursor()
+    """Create tables if they don't exist. Uses a direct connection, not the pool/g."""
+    conn = psycopg2.connect(DATABASE_URL)
+    try:
+        cur = conn.cursor()
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS crowdle_users (
                 id            SERIAL PRIMARY KEY,
                 username      TEXT   NOT NULL UNIQUE,
                 password_hash TEXT   NOT NULL,
@@ -115,27 +118,29 @@ def _init_db():
             )
         ''')
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS puzzles (
+            CREATE TABLE IF NOT EXISTS crowdle_puzzles (
                 id         SERIAL PRIMARY KEY,
                 word       TEXT    NOT NULL,
-                creator_id INTEGER NOT NULL REFERENCES users(id),
+                creator_id INTEGER NOT NULL REFERENCES crowdle_users(id),
                 status     TEXT    NOT NULL DEFAULT 'active',
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 solved_at  TIMESTAMPTZ,
-                solver_id  INTEGER REFERENCES users(id)
+                solver_id  INTEGER REFERENCES crowdle_users(id)
             )
         ''')
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS guesses (
+            CREATE TABLE IF NOT EXISTS crowdle_guesses (
                 id         SERIAL PRIMARY KEY,
-                puzzle_id  INTEGER NOT NULL REFERENCES puzzles(id),
-                user_id    INTEGER NOT NULL REFERENCES users(id),
+                puzzle_id  INTEGER NOT NULL REFERENCES crowdle_puzzles(id),
+                user_id    INTEGER NOT NULL REFERENCES crowdle_users(id),
                 word       TEXT    NOT NULL,
                 clue       TEXT    NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         ''')
-        get_db().commit()
+        conn.commit()
+    finally:
+        conn.close()
 
 
 _init_db()
@@ -186,7 +191,7 @@ def register():
     password_hash = bcrypt.generate_password_hash(password).decode()
     try:
         cur.execute(
-            'INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id',
+            'INSERT INTO crowdle_users (username, password_hash) VALUES (%s, %s) RETURNING id',
             (username, password_hash),
         )
         user_id = cur.fetchone()['id']
@@ -209,7 +214,7 @@ def login():
     username = (data.get('username') or '').strip()
     password = data.get('password') or ''
 
-    cur.execute('SELECT id, password_hash FROM users WHERE username = %s', (username,))
+    cur.execute('SELECT id, password_hash FROM crowdle_users WHERE username = %s', (username,))
     row = cur.fetchone()
     if not row or not bcrypt.check_password_hash(row['password_hash'], password):
         return jsonify({'error': 'Invalid username or password'}), 401
@@ -226,7 +231,7 @@ def login():
 def me():
     cur = _cursor()
     user_id = int(get_jwt_identity())
-    cur.execute('SELECT id, username, score FROM users WHERE id = %s', (user_id,))
+    cur.execute('SELECT id, username, score FROM crowdle_users WHERE id = %s', (user_id,))
     row = cur.fetchone()
     if not row:
         return jsonify({'error': 'User not found'}), 404
@@ -238,9 +243,9 @@ def me():
 def _puzzle_summary(cur, row) -> dict:
     """Build the list-view representation of a puzzle row."""
     cur.execute(
-        'SELECT guesses.word, guesses.clue, users.username '
-        'FROM guesses JOIN users ON guesses.user_id = users.id '
-        'WHERE guesses.puzzle_id = %s ORDER BY guesses.id DESC LIMIT 1',
+        'SELECT crowdle_guesses.word, crowdle_guesses.clue, crowdle_users.username '
+        'FROM crowdle_guesses JOIN crowdle_users ON crowdle_guesses.user_id = crowdle_users.id '
+        'WHERE crowdle_guesses.puzzle_id = %s ORDER BY crowdle_guesses.id DESC LIMIT 1',
         (row['id'],),
     )
     last = cur.fetchone()
@@ -260,14 +265,14 @@ def _puzzle_summary(cur, row) -> dict:
 def list_puzzles():
     cur = _cursor()
     cur.execute('''
-        SELECT puzzles.id, users.username AS creator, puzzles.creator_id,
-               puzzles.status, puzzles.word,
-               COUNT(guesses.id) AS guess_count
-        FROM puzzles
-        JOIN users ON puzzles.creator_id = users.id
-        LEFT JOIN guesses ON guesses.puzzle_id = puzzles.id
-        GROUP BY puzzles.id, users.username, puzzles.creator_id, puzzles.status, puzzles.word
-        ORDER BY puzzles.id DESC
+        SELECT crowdle_puzzles.id, crowdle_users.username AS creator, crowdle_puzzles.creator_id,
+               crowdle_puzzles.status, crowdle_puzzles.word,
+               COUNT(crowdle_guesses.id) AS guess_count
+        FROM crowdle_puzzles
+        JOIN crowdle_users ON crowdle_puzzles.creator_id = crowdle_users.id
+        LEFT JOIN crowdle_guesses ON crowdle_guesses.puzzle_id = crowdle_puzzles.id
+        GROUP BY crowdle_puzzles.id, crowdle_users.username, crowdle_puzzles.creator_id, crowdle_puzzles.status, crowdle_puzzles.word
+        ORDER BY crowdle_puzzles.id DESC
     ''')
     rows = cur.fetchall()
     return jsonify([_puzzle_summary(cur, r) for r in rows])
@@ -277,25 +282,25 @@ def list_puzzles():
 def get_puzzle(puzzle_id):
     cur = _cursor()
     cur.execute('''
-        SELECT puzzles.id, users.username AS creator, puzzles.creator_id,
-               puzzles.status, puzzles.word,
-               COUNT(guesses.id) AS guess_count
-        FROM puzzles
-        JOIN users ON puzzles.creator_id = users.id
-        LEFT JOIN guesses ON guesses.puzzle_id = puzzles.id
-        WHERE puzzles.id = %s
-        GROUP BY puzzles.id, users.username, puzzles.creator_id, puzzles.status, puzzles.word
+        SELECT crowdle_puzzles.id, crowdle_users.username AS creator, crowdle_puzzles.creator_id,
+               crowdle_puzzles.status, crowdle_puzzles.word,
+               COUNT(crowdle_guesses.id) AS guess_count
+        FROM crowdle_puzzles
+        JOIN crowdle_users ON crowdle_puzzles.creator_id = crowdle_users.id
+        LEFT JOIN crowdle_guesses ON crowdle_guesses.puzzle_id = crowdle_puzzles.id
+        WHERE crowdle_puzzles.id = %s
+        GROUP BY crowdle_puzzles.id, crowdle_users.username, crowdle_puzzles.creator_id, crowdle_puzzles.status, crowdle_puzzles.word
     ''', (puzzle_id,))
     puzzle = cur.fetchone()
     if not puzzle:
         return jsonify({'error': 'Puzzle not found'}), 404
 
     cur.execute('''
-        SELECT guesses.id, users.username, guesses.word, guesses.clue, guesses.created_at
-        FROM guesses
-        JOIN users ON guesses.user_id = users.id
-        WHERE guesses.puzzle_id = %s
-        ORDER BY guesses.id ASC
+        SELECT crowdle_guesses.id, crowdle_users.username, crowdle_guesses.word, crowdle_guesses.clue, crowdle_guesses.created_at
+        FROM crowdle_guesses
+        JOIN crowdle_users ON crowdle_guesses.user_id = crowdle_users.id
+        WHERE crowdle_guesses.puzzle_id = %s
+        ORDER BY crowdle_guesses.id ASC
     ''', (puzzle_id,))
     guesses = [
         {
@@ -337,13 +342,13 @@ def create_puzzle():
         return jsonify({'error': 'Word contains inappropriate content'}), 422
 
     cur.execute(
-        'INSERT INTO puzzles (word, creator_id) VALUES (%s, %s) RETURNING id',
+        'INSERT INTO crowdle_puzzles (word, creator_id) VALUES (%s, %s) RETURNING id',
         (word, user_id),
     )
     puzzle_id = cur.fetchone()['id']
     get_db().commit()
 
-    cur.execute('SELECT username FROM users WHERE id = %s', (user_id,))
+    cur.execute('SELECT username FROM crowdle_users WHERE id = %s', (user_id,))
     creator = cur.fetchone()['username']
 
     return jsonify({
@@ -366,7 +371,7 @@ def submit_guess(puzzle_id):
     word = (data.get('word') or '').strip().lower()
 
     # Validate the puzzle
-    cur.execute('SELECT * FROM puzzles WHERE id = %s', (puzzle_id,))
+    cur.execute('SELECT * FROM crowdle_puzzles WHERE id = %s', (puzzle_id,))
     puzzle = cur.fetchone()
     if not puzzle:
         return jsonify({'error': 'Puzzle not found'}), 404
@@ -383,7 +388,7 @@ def submit_guess(puzzle_id):
 
     # Enforce the no-consecutive-guesses rule
     cur.execute(
-        'SELECT user_id FROM guesses WHERE puzzle_id = %s ORDER BY id DESC LIMIT 1',
+        'SELECT user_id FROM crowdle_guesses WHERE puzzle_id = %s ORDER BY id DESC LIMIT 1',
         (puzzle_id,),
     )
     last_guess = cur.fetchone()
@@ -393,7 +398,7 @@ def submit_guess(puzzle_id):
     # Compute clue and save guess
     clue = compute_clue(puzzle['word'], word)
     cur.execute(
-        'INSERT INTO guesses (puzzle_id, user_id, word, clue) VALUES (%s, %s, %s, %s) RETURNING id',
+        'INSERT INTO crowdle_guesses (puzzle_id, user_id, word, clue) VALUES (%s, %s, %s, %s) RETURNING id',
         (puzzle_id, user_id, word, json.dumps(clue)),
     )
     guess_id = cur.fetchone()['id']
@@ -409,18 +414,18 @@ def submit_guess(puzzle_id):
 
     if solved:
         # Count total guesses (including the winning one)
-        cur.execute('SELECT COUNT(*) AS n FROM guesses WHERE puzzle_id = %s', (puzzle_id,))
+        cur.execute('SELECT COUNT(*) AS n FROM crowdle_guesses WHERE puzzle_id = %s', (puzzle_id,))
         total = cur.fetchone()['n']
 
         solver_points = max(1, 11 - total)
         creator_points = total // 2
 
         cur.execute(
-            'UPDATE puzzles SET status = %s, solved_at = NOW(), solver_id = %s WHERE id = %s',
+            'UPDATE crowdle_puzzles SET status = %s, solved_at = NOW(), solver_id = %s WHERE id = %s',
             ('solved', user_id, puzzle_id),
         )
-        cur.execute('UPDATE users SET score = score + %s WHERE id = %s', (solver_points, user_id))
-        cur.execute('UPDATE users SET score = score + %s WHERE id = %s', (creator_points, puzzle['creator_id']))
+        cur.execute('UPDATE crowdle_users SET score = score + %s WHERE id = %s', (solver_points, user_id))
+        cur.execute('UPDATE crowdle_users SET score = score + %s WHERE id = %s', (creator_points, puzzle['creator_id']))
         get_db().commit()
 
         response['points_earned'] = solver_points
@@ -434,7 +439,7 @@ def submit_guess(puzzle_id):
 def leaderboard():
     cur = _cursor()
     cur.execute(
-        'SELECT username, score FROM users ORDER BY score DESC, username ASC',
+        'SELECT username, score FROM crowdle_users ORDER BY score DESC, username ASC',
     )
     return jsonify([
         {'rank': i + 1, 'username': row['username'], 'score': row['score']}
@@ -570,7 +575,7 @@ _PUZZLES_HTML = '''<!doctype html>
 @app.route('/view/leaderboard')
 def view_leaderboard():
     cur = _cursor()
-    cur.execute('SELECT username, score FROM users ORDER BY score DESC, username ASC')
+    cur.execute('SELECT username, score FROM crowdle_users ORDER BY score DESC, username ASC')
     entries = [
         {'rank': i + 1, 'username': r['username'], 'score': r['score']}
         for i, r in enumerate(cur.fetchall())
@@ -582,21 +587,21 @@ def view_leaderboard():
 def view_puzzles():
     cur = _cursor()
     cur.execute('''
-        SELECT puzzles.id, users.username AS creator, puzzles.status, puzzles.word
-        FROM puzzles
-        JOIN users ON puzzles.creator_id = users.id
-        ORDER BY puzzles.id DESC
+        SELECT crowdle_puzzles.id, crowdle_users.username AS creator, crowdle_puzzles.status, crowdle_puzzles.word
+        FROM crowdle_puzzles
+        JOIN crowdle_users ON crowdle_puzzles.creator_id = crowdle_users.id
+        ORDER BY crowdle_puzzles.id DESC
     ''')
     puzzle_rows = cur.fetchall()
 
     puzzles = []
     for row in puzzle_rows:
         cur.execute('''
-            SELECT users.username, guesses.word, guesses.clue
-            FROM guesses
-            JOIN users ON guesses.user_id = users.id
-            WHERE guesses.puzzle_id = %s
-            ORDER BY guesses.id ASC
+            SELECT crowdle_users.username, crowdle_guesses.word, crowdle_guesses.clue
+            FROM crowdle_guesses
+            JOIN crowdle_users ON crowdle_guesses.user_id = crowdle_users.id
+            WHERE crowdle_guesses.puzzle_id = %s
+            ORDER BY crowdle_guesses.id ASC
         ''', (row['id'],))
         guesses = [
             {'username': g['username'], 'word': g['word'], 'clue': json.loads(g['clue'])}
