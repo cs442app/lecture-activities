@@ -25,7 +25,10 @@ from better_profanity import profanity
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'crowdle-cs442-dev!')
+app.config['JWT_SECRET_KEY'] = os.environ.get(
+    'JWT_SECRET_KEY',
+    'crowdle-cs442-local-dev-key-not-for-production',
+)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 jwt = JWTManager(app)
 
@@ -60,8 +63,7 @@ print(f'Loaded {len(VALID_WORDS)} valid 5-letter words.')
 
 db = sqlite3.connect('crowdle.db', check_same_thread=False)
 db.row_factory = sqlite3.Row
-cur = db.cursor()
-cur.executescript('''
+db.executescript('''
     PRAGMA foreign_keys = ON;
 
     CREATE TABLE IF NOT EXISTS users (
@@ -90,7 +92,13 @@ cur.executescript('''
         created_at TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 ''')
-db.commit()
+
+
+def _cursor():
+    """Return a fresh cursor with foreign-key enforcement on."""
+    cur = db.cursor()
+    cur.execute('PRAGMA foreign_keys = ON')
+    return cur
 
 
 # ── Clue logic ─────────────────────────────────────────────────────────────────
@@ -127,6 +135,7 @@ def compute_clue(answer: str, guess: str) -> list[str]:
 
 @app.route('/register', methods=['POST'])
 def register():
+    cur = _cursor()
     data = request.get_json(silent=True) or {}
     username = (data.get('username') or '').strip()
     password = data.get('password') or ''
@@ -147,13 +156,14 @@ def register():
 
     return jsonify({
         'message': 'Registered successfully',
-        'access_token': create_access_token(identity=user_id),
+        'access_token': create_access_token(identity=str(user_id)),
         'username': username,
     })
 
 
 @app.route('/login', methods=['POST'])
 def login():
+    cur = _cursor()
     data = request.get_json(silent=True) or {}
     username = (data.get('username') or '').strip()
     password = data.get('password') or ''
@@ -165,7 +175,7 @@ def login():
 
     return jsonify({
         'message': 'Login successful',
-        'access_token': create_access_token(identity=row['id']),
+        'access_token': create_access_token(identity=str(row['id'])),
         'username': username,
     })
 
@@ -173,7 +183,8 @@ def login():
 @app.route('/me')
 @jwt_required()
 def me():
-    user_id = get_jwt_identity()
+    cur = _cursor()
+    user_id = int(get_jwt_identity())
     cur.execute('SELECT id, username, score FROM users WHERE id = ?', (user_id,))
     row = cur.fetchone()
     if not row:
@@ -183,8 +194,9 @@ def me():
 
 # ── Puzzle routes ──────────────────────────────────────────────────────────────
 
-def _puzzle_summary(row) -> dict:
+def _puzzle_summary(cur, row) -> dict:
     """Build the list-view representation of a puzzle row."""
+    import json
     cur.execute(
         'SELECT guesses.word, guesses.clue, users.username '
         'FROM guesses JOIN users ON guesses.user_id = users.id '
@@ -192,8 +204,6 @@ def _puzzle_summary(row) -> dict:
         (row['id'],),
     )
     last = cur.fetchone()
-
-    import json
     return {
         'id':           row['id'],
         'creator':      row['creator'],
@@ -208,6 +218,7 @@ def _puzzle_summary(row) -> dict:
 
 @app.route('/puzzles')
 def list_puzzles():
+    cur = _cursor()
     cur.execute('''
         SELECT puzzles.id, users.username AS creator, puzzles.creator_id,
                puzzles.status, puzzles.word,
@@ -219,12 +230,13 @@ def list_puzzles():
         ORDER BY puzzles.id DESC
     ''')
     rows = cur.fetchall()
-    return jsonify([_puzzle_summary(r) for r in rows])
+    return jsonify([_puzzle_summary(cur, r) for r in rows])
 
 
 @app.route('/puzzles/<int:puzzle_id>')
 def get_puzzle(puzzle_id):
     import json
+    cur = _cursor()
     cur.execute('''
         SELECT puzzles.id, users.username AS creator, puzzles.creator_id,
                puzzles.status, puzzles.word,
@@ -271,7 +283,8 @@ def get_puzzle(puzzle_id):
 @app.route('/puzzles', methods=['POST'])
 @jwt_required()
 def create_puzzle():
-    user_id = get_jwt_identity()
+    cur = _cursor()
+    user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
     word = (data.get('word') or '').strip().lower()
 
@@ -309,7 +322,8 @@ def create_puzzle():
 @jwt_required()
 def submit_guess(puzzle_id):
     import json
-    user_id = get_jwt_identity()
+    cur = _cursor()
+    user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
     word = (data.get('word') or '').strip().lower()
 
@@ -379,6 +393,7 @@ def submit_guess(puzzle_id):
 
 @app.route('/leaderboard')
 def leaderboard():
+    cur = _cursor()
     cur.execute(
         'SELECT username, score FROM users ORDER BY score DESC, username ASC',
     )
@@ -515,6 +530,7 @@ _PUZZLES_HTML = '''<!doctype html>
 
 @app.route('/view/leaderboard')
 def view_leaderboard():
+    cur = _cursor()
     cur.execute('SELECT username, score FROM users ORDER BY score DESC, username ASC')
     entries = [
         {'rank': i + 1, 'username': r['username'], 'score': r['score']}
@@ -526,6 +542,7 @@ def view_leaderboard():
 @app.route('/view/puzzles')
 def view_puzzles():
     import json
+    cur = _cursor()
     cur.execute('''
         SELECT puzzles.id, users.username AS creator, puzzles.status, puzzles.word
         FROM puzzles
@@ -558,6 +575,19 @@ def view_puzzles():
 
 
 # ── Error handlers ─────────────────────────────────────────────────────────────
+
+# Override flask_jwt_extended's default responses so all errors use 'error' key.
+@jwt.invalid_token_loader
+def invalid_token_callback(reason):
+    return jsonify({'error': f'Invalid token: {reason}'}), 422
+
+@jwt.unauthorized_loader
+def missing_token_callback(reason):
+    return jsonify({'error': f'Authorization required: {reason}'}), 401
+
+@jwt.expired_token_loader
+def expired_token_callback(_header, _payload):
+    return jsonify({'error': 'Token has expired — please log in again'}), 401
 
 @app.errorhandler(401)
 def unauthorized(_):
